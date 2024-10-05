@@ -4,6 +4,8 @@ import cors from 'cors';
 
 import { env } from './utils/env.js';
 
+import * as contactsServices from './services/contacts.js';
+
 const PORT = Number(env('PORT', '3000'));
 
 export const setupServer = () => {
@@ -19,6 +21,15 @@ export const setupServer = () => {
       },
     }),
   );
+
+  app.use('/contacts', async (req, res) => {
+    const data = await contactsServices.getContacts();
+    res.json({
+      status: 200,
+      message: 'Successfully get contacts',
+      data,
+    });
+  });
 
   app.use('*', (req, res, next) => {
     res.status(404).json({
