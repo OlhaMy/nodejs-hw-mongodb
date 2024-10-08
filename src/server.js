@@ -4,7 +4,9 @@ import cors from 'cors';
 
 import { env } from './utils/env.js';
 
-import * as contactsServices from './services/contacts.js';
+import router from './routers/contacts.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 const PORT = Number(env('PORT', '3000'));
 
@@ -22,44 +24,11 @@ export const setupServer = () => {
     }),
   );
 
-  app.get('/contacts', async (req, res) => {
-    const data = await contactsServices.getContacts();
-    res.json({
-      status: 200,
-      message: 'Successfully found contacts',
-      data,
-    });
-  });
+  app.use(router);
 
-  app.get('/contacts/:contactId', async (req, res) => {
-    const { contactId } = req.params;
-    const data = await contactsServices.getContactById(contactId);
+  app.use('*', notFoundHandler);
 
-    if (!data) {
-      return res.status(404).json({
-        status: 404,
-        message: `Contact with id=${contactId} not found`,
-      });
-    }
-    res.json({
-      status: 200,
-      message: `Successfully found contact with id ${contactId}!`,
-      data,
-    });
-  });
-
-  app.use('*', (req, res, next) => {
-    res.status(404).json({
-      message: 'Not found',
-    });
-  });
-
-  app.use((err, req, res, next) => {
-    res.status(500).json({
-      message: 'Something went wrong',
-      error: err.message,
-    });
-  });
+  app.use(errorHandler);
 
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
