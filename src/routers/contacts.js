@@ -1,5 +1,8 @@
 import { Router } from 'express';
 
+import { isValidId } from '../middlewares/isValidId.js';
+import { authenticate } from '../middlewares/authenticate.js';
+
 import {
   getContactsController,
   getContactByIdController,
@@ -13,9 +16,10 @@ import {
   contactsAddSchema,
   contactsUpdateSchema,
 } from '../validation/contacts.js';
-import { isValidId } from '../middlewares/isValidId.js';
 
 const routerContacts = Router();
+
+routerContacts.use(authenticate);
 
 routerContacts.get('/', ctrlWrapper(getContactsController));
 routerContacts.get(
