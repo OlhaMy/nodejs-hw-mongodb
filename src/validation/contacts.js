@@ -11,7 +11,7 @@ export const contactsAddSchema = Joi.object({
     .valid(...typeList)
     .min(3)
     .max(20),
-  userId: Joi.string().required(),
+  userId: Joi.string(),
 });
 
 export const contactsUpdateSchema = Joi.object({
