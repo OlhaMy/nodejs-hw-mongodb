@@ -2,6 +2,7 @@ import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -17,6 +18,7 @@ export const setupServer = () => {
   app.use(cors());
   app.use(logger);
   app.use(cookieParser());
+  app.use(express.static('uploads'));
   app.use(express.json());
 
   app.use(

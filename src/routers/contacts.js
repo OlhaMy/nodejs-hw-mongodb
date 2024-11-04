@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { isValidId } from '../middlewares/isValidId.js';
 import { authenticate } from '../middlewares/authenticate.js';
+import { upload } from '../middlewares/uploads.js';
 
 import {
   getContactsController,
@@ -29,6 +30,7 @@ routerContacts.get(
 );
 routerContacts.post(
   '/',
+  upload.single('photo'),
   validateBody(contactsAddSchema),
   ctrlWrapper(createContactController),
 );

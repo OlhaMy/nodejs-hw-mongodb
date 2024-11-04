@@ -1,4 +1,6 @@
+import path from 'node:path';
 import createHttpError from 'http-errors';
+import { env } from '../utils/env.js';
 import {
   getContacts,
   getContactById,
@@ -9,6 +11,9 @@ import {
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { saveFileToUploadsDir } from '../utils/saveFileToUploadsDir.js';
+import { upload } from '../middlewares/uploads.js';
 
 export const getContactsController = async (req, res) => {
   const { _id: userId } = req.user;
@@ -41,8 +46,19 @@ export const getContactByIdController = async (req, res) => {
 };
 
 export const createContactController = async (req, res) => {
-  const newContact = { ...req.body, userId: req.user._id };
-  const contact = await createContact(newContact);
+  const { _id: userId } = req.user;
+  let photo = '';
+
+  if (req.file) {
+    if (env('ENABLE_CLOUDINARY') === 'true') {
+      photo = await saveFileToCloudinary(req.file);
+    } else {
+      const localPath = await saveFileToUploadsDir(req.file, 'contacts');
+      photo = `/uploads/contacts/${path.basename(localPath)}`;
+    }
+  }
+
+  const contact = await createContact({ ...req.body, userId, photo });
 
   res.status(201).json({
     status: 201,
@@ -51,12 +67,31 @@ export const createContactController = async (req, res) => {
   });
 };
 
-export const patchContactController = async (req, res) => {
+export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  const result = await updateContactById(contactId, req.user._id, req.body);
+  const { _id: userId } = req.user;
+  const photo = req.file;
+  let photoUrl;
+
+  if (req.file) {
+    photoUrl =
+      env('ENABLE_CLOUDINARY') === 'true'
+        ? await saveFileToCloudinary(req.file)
+        : `/uploads/contacts/${path.basename(
+            await saveFileToUploadsDir(req.file, 'contacts'),
+          )}`;
+  }
+
+  const result = await updateContactById(
+    { _id: contactId, userId },
+    {
+      ...req.body,
+      photo: photoUrl,
+    },
+  );
 
   if (!result) {
-    throw createHttpError(404, `Contact with id=${contactId} not found`);
+    return next(createHttpError(404, `Contact with id=${contactId} not found`));
   }
 
   res.json({
